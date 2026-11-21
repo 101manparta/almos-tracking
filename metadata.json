@@ -1,0 +1,6 @@
+{
+  "name": "ALMOS Laundry Detailing — Garment Tracking System",
+  "description": "Internal operational management and individual garment tracking system for ALMOS Laundry Detailing.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

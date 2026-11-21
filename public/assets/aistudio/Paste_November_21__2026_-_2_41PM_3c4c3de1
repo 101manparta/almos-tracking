@@ -1,0 +1,1362 @@
+# MASTER BUILD PROMPT — ALMOS LAUNDRY DETAILING TRACKING SYSTEM
+## FULL-STACK PRODUCTION-ORIENTED APPLICATION
+
+Act as a Senior Software Architect, Senior Rust Backend Engineer, Senior Frontend Engineer, Database Engineer, DevOps Engineer, and Professional UI/UX Designer.
+
+Your mission is to design, implement, integrate, and test a complete full-stack web application for:
+
+**ALMOS LAUNDRY DETAILING**
+
+Tagline: "your professional detailing laundry"
+
+This application is an internal operational management and garment tracking system.
+
+You must build the complete application from frontend to backend. Do not stop at a UI mockup, static prototype, architecture document, or sample code.
+
+The final result must be a functional application with real database persistence, real authentication, working APIs, real image storage integration, role-based access control, and complete garment tracking workflows.
+
+---
+
+# 1. PRODUCT OBJECTIVE
+
+Build a centralized system that allows ALMOS to track every individual garment from the moment it is registered until it is handed back to the customer.
+
+The system must solve these operational problems:
+
+1. Garments can get mixed up between customers or vendors.
+2. Physical tags can become lost or detached.
+3. Staff need to know which department currently handles each garment.
+4. Administrators need to monitor the entire laundry operation.
+5. Staff need to record the completion of their work.
+6. Every garment needs a visual reference through photos.
+7. Completed orders must be archived without losing historical data.
+8. The system must remain responsive when thousands of garments and photos accumulate.
+
+This is NOT an e-commerce application.
+
+This is NOT a customer-facing booking website.
+
+This is an internal laundry operations system.
+
+---
+
+# 2. BRAND IDENTITY AND UI DESIGN
+
+Use the official ALMOS brand identity.
+
+### Primary colors
+
+- Blue: `#0756B8`
+- Orange: `#F7941D`
+- White: `#FFFFFF`
+- Dark Navy: `#12345A`
+- Background: `#F5F8FC`
+- Light Blue: `#EAF3FF`
+- Light Orange: `#FFF3E4`
+
+### Gradient system
+
+Primary gradient:
+
+`linear-gradient(135deg, #0756B8 0%, #3D8BE8 55%, #EAF3FF 100%)`
+
+Brand accent gradient:
+
+`linear-gradient(135deg, #0756B8 0%, #F7941D 100%)`
+
+Background gradient:
+
+`linear-gradient(180deg, #FFFFFF 0%, #F5F8FC 100%)`
+
+Use smooth, elegant gradients with subtle transitions.
+
+### Design direction
+
+Create a premium SaaS dashboard with:
+
+- Modern professional appearance.
+- Clean white surfaces.
+- Smooth blue gradients.
+- Controlled orange accents.
+- Subtle glassmorphism.
+- Soft shadows.
+- Rounded cards.
+- Consistent spacing.
+- Clear typography.
+- Beautiful but functional charts.
+- Smooth micro-interactions.
+- Responsive layouts.
+
+Avoid:
+- Excessive gradients.
+- Excessive glass effects.
+- Crowded dashboards.
+- Cheap template appearance.
+- Random color combinations.
+- Oversized decorative elements.
+- AI-looking generic dashboard designs.
+
+### Responsive requirements
+
+Desktop:
+- Fixed or collapsible sidebar.
+- Main content area.
+- Header with search, notifications, and profile.
+
+Tablet:
+- Collapsible navigation.
+- Responsive card grid.
+
+Mobile:
+- Mobile-first interface.
+- Bottom navigation.
+- Large touch targets.
+- Optimized garment photo viewing.
+- Easy one-handed operation.
+- No horizontal overflow.
+
+### Navigation design
+
+Admin sidebar:
+
+- Dashboard
+- Pesanan
+- Data Barang
+- Tracking
+- Galeri Foto
+- Divisi
+- Pengambilan
+- Arsip
+- Laporan
+- Manajemen Pengguna
+- Pengaturan
+
+Staff mobile navigation:
+
+- Beranda
+- Antrean
+- Cari Barang
+- Riwayat
+- Profil
+
+Use Indonesian for the application interface.
+
+---
+
+# 3. TECHNOLOGY STACK
+
+Use this architecture.
+
+## Frontend
+
+- Next.js
+- TypeScript
+- App Router
+- Tailwind CSS
+- Reusable component architecture
+- React Hook Form
+- Zod validation
+- TanStack Query for API state management
+- Appropriate chart library
+- Lucide icons
+
+## Backend
+
+- Rust
+- Axum
+- Tokio
+- SQLx
+- Serde
+- Validator
+- Tracing
+- Utoipa / OpenAPI
+- Argon2id for password hashing
+
+## Database
+
+- PostgreSQL
+
+## Object storage
+
+- Supabase Storage
+
+Store garment photos in object storage, not as binary data inside PostgreSQL.
+
+PostgreSQL stores:
+- Image ID
+- Garment ID
+- Storage path
+- Image type
+- File size
+- MIME type
+- Uploaded by
+- Created timestamp
+
+## Architecture
+
+Use a modular monolith.
+
+Do not introduce unnecessary microservices.
+
+Do not introduce Redis initially.
+
+Do not introduce Kubernetes initially.
+
+The architecture must remain simple enough to maintain but structured enough to scale.
+
+Frontend communicates with Rust backend through REST APIs.
+
+Business logic must reside in the backend.
+
+---
+
+# 4. PROJECT DIRECTORY STRUCTURE
+
+Create a clean project structure similar to:
+
+almos-tracking/
+│
+├── frontend/
+│   ├── app/
+│   │   ├── (auth)/
+│   │   ├── (admin)/
+│   │   ├── (staff)/
+│   │   ├── api/
+│   │   ├── layout.tsx
+│   │   └── globals.css
+│   │
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── dashboard/
+│   │   ├── garments/
+│   │   ├── orders/
+│   │   ├── tracking/
+│   │   └── layout/
+│   │
+│   ├── hooks/
+│   ├── lib/
+│   ├── services/
+│   ├── schemas/
+│   ├── types/
+│   └── public/
+│
+├── backend/
+│   ├── Cargo.toml
+│   ├── .env.example
+│   └── src/
+│       ├── main.rs
+│       ├── config/
+│       ├── routes/
+│       ├── handlers/
+│       ├── services/
+│       ├── repositories/
+│       ├── models/
+│       ├── middleware/
+│       ├── errors/
+│       └── utils/
+│
+├── database/
+│   └── migrations/
+│
+├── docs/
+│   ├── architecture.md
+│   ├── database.md
+│   ├── api.md
+│   └── deployment.md
+│
+├── docker-compose.yml
+├── README.md
+└── .gitignore
+
+You may refine this structure if there is a strong engineering reason.
+
+Do not place the entire application inside one file.
+
+---
+
+# 5. AUTHENTICATION AND USER MANAGEMENT
+
+Implement real authentication.
+
+User roles:
+
+### ADMIN
+
+Full system access:
+- Dashboard.
+- Orders.
+- Garments.
+- Photo gallery.
+- Tracking.
+- Departments.
+- Pickup.
+- Archive.
+- Reports.
+- User management.
+- Settings.
+
+### SPOTTING
+
+Permissions:
+- View spotting queue.
+- View garment details.
+- View reference photos.
+- Start spotting task.
+- Complete spotting task.
+- Fill spotting checklist.
+- Report problems.
+- Confirm handover.
+
+### IRONING
+
+Permissions:
+- View ironing queue.
+- View garment details.
+- Start ironing task.
+- Complete ironing task.
+- Fill ironing checklist.
+- Report problems.
+- Confirm handover.
+
+### PACKING
+
+Permissions:
+- View packing queue.
+- View garment details.
+- Start packing task.
+- Complete packing checklist.
+- Confirm handover to admin.
+
+Security requirements:
+
+- Hash passwords with Argon2id.
+- Secure session management.
+- HttpOnly cookies.
+- Secure cookie configuration in production.
+- Appropriate SameSite policy.
+- Backend authorization middleware.
+- Protected routes.
+- Input validation.
+- Login rate limiting.
+- Audit logging.
+
+Never use fake authentication.
+
+Never hardcode production credentials.
+
+Do not create public registration unless explicitly required.
+
+Admin must be able to create and deactivate staff accounts.
+
+---
+
+# 6. ORDER MANAGEMENT
+
+An order can contain multiple garments.
+
+An order must have:
+
+- Order ID.
+- Customer/vendor name.
+- Contact information.
+- Order category.
+- Order creation date.
+- Expected completion date.
+- Number of garments.
+- Notes.
+- Order status.
+- Created by.
+- Created timestamp.
+
+Order categories may include:
+
+- Individual customer.
+- Villa.
+- Hotel.
+- Wedding organizer.
+- Salon.
+- Other vendor.
+
+Features:
+
+- Create order.
+- Edit order information.
+- View order details.
+- Search order.
+- Filter order.
+- View all garments in an order.
+- View order progress.
+- Cancel order with reason.
+- Confirm pickup.
+- View archived order.
+
+Use pagination and server-side filtering.
+
+---
+
+# 7. INDIVIDUAL GARMENT MANAGEMENT
+
+This is the most important module.
+
+Every garment must have its own unique database record.
+
+Never treat multiple garments inside one order as a single tracking item.
+
+Each garment contains:
+
+- Internal garment UUID.
+- Order ID.
+- Garment name.
+- Garment category.
+- Garment type.
+- Brand.
+- Color.
+- Size.
+- Physical tag number.
+- Distinctive features.
+- Initial condition.
+- Stain description.
+- Special handling instructions.
+- Current department.
+- Current status.
+- Registration timestamp.
+- Registered by.
+
+Examples:
+
+- Black Zara blazer.
+- White wedding dress.
+- Blue hotel towel.
+- Cream-colored duvet.
+- Black formal trousers.
+
+### Physical tag policy
+
+IMPORTANT:
+
+ALMOS currently uses physical tags.
+
+Keep the existing manual tagging process.
+
+Do NOT introduce:
+- QR codes.
+- Barcodes.
+- RFID.
+- Mandatory scanning hardware.
+
+The internal garment ID is a digital identifier only.
+
+The physical tag number should be stored in the database for cross-reference.
+
+### Garment identification
+
+Allow administrators to upload several photos:
+
+1. Front view.
+2. Back view.
+3. Brand or label.
+4. Physical tag.
+5. Stain details.
+6. Special characteristics.
+
+Staff must be able to open photos quickly on mobile devices.
+
+If a physical tag is lost, staff can search by:
+- Customer/vendor.
+- Order ID.
+- Garment type.
+- Brand.
+- Color.
+- Distinctive features.
+- Reference photos.
+
+Photo matching is an identification aid, not a guarantee. Similar garments must be verified by staff before processing or handover.
+
+---
+
+# 8. PHOTO STORAGE AND MANAGEMENT
+
+Implement actual image uploads.
+
+Use Supabase Storage.
+
+Requirements:
+
+- Upload multiple images.
+- Validate MIME type.
+- Restrict file size.
+- Generate thumbnails.
+- Compress images where appropriate.
+- Store image metadata in PostgreSQL.
+- Display image galleries.
+- Lazy-load images.
+- Support deleting an incorrect photo with authorization and audit logging.
+- Use secure access to private photos.
+
+Suggested image categories:
+
+- FRONT
+- BACK
+- LABEL
+- TAG
+- DETAIL
+- OTHER
+
+Do not load all original images simultaneously.
+
+Use thumbnails for lists and original images for detailed views.
+
+---
+
+# 9. GARMENT WORKFLOW ENGINE
+
+Implement a backend-controlled state machine.
+
+Default workflow:
+
+REGISTERED
+↓
+WAITING_SPOTTING
+↓
+SPOTTING_IN_PROGRESS
+↓
+WAITING_IRONING
+↓
+IRONING_IN_PROGRESS
+↓
+WAITING_PACKING
+↓
+PACKING_IN_PROGRESS
+↓
+READY_FOR_PICKUP
+↓
+PICKED_UP
+
+Exception status:
+
+ON_HOLD
+
+The workflow must support service-specific variations.
+
+For example, some garments may not require every operational stage.
+
+Every garment must have a defined workflow template based on its service type.
+
+### Workflow rules
+
+1. Staff can only process garments assigned to their department.
+2. Staff cannot skip required stages.
+3. Staff cannot complete a task that has not been started.
+4. Staff cannot change status arbitrarily.
+5. Every transition must be validated by Rust backend.
+6. Every transition must create a history record.
+7. Every transition must record the responsible user and timestamp.
+8. Problems must be reportable.
+9. ON_HOLD must include a reason.
+10. Resuming work must be explicitly authorized and logged.
+
+### Handover process
+
+When one department finishes:
+
+- Record completion.
+- Record responsible staff.
+- Record handover time.
+- Update the garment's next stage.
+- Make the garment visible in the next department queue.
+
+Do not silently change departments.
+
+Use transactional database operations to ensure that the status update and history record are saved together.
+
+Prevent duplicate submissions and concurrent updates from corrupting workflow state.
+
+---
+
+# 10. STAFF OPERATIONAL INTERFACE
+
+Create separate dashboards based on user role.
+
+### Spotting dashboard
+
+Display:
+- Waiting for spotting.
+- Currently processing.
+- Completed today.
+- On hold.
+
+Each garment card shows:
+- Reference photo.
+- Garment name.
+- Brand.
+- Color.
+- Customer/vendor.
+- Physical tag number.
+- Notes.
+- Current status.
+
+Actions:
+- Open details.
+- Start work.
+- Complete checklist.
+- Report issue.
+- Complete and hand over.
+
+### Ironing dashboard
+
+Display:
+- Waiting for ironing.
+- Currently processing.
+- Completed today.
+- On hold.
+
+Actions:
+- Receive garment.
+- Verify identity.
+- Start ironing.
+- Complete checklist.
+- Report issue.
+- Handover.
+
+### Packing dashboard
+
+Display:
+- Waiting for packing.
+- Currently processing.
+- Ready to hand over.
+
+Actions:
+- Receive garment.
+- Verify identity.
+- Complete packing checklist.
+- Mark packed.
+- Handover to admin.
+
+The staff interface must be easy to operate with one hand on a smartphone.
+
+---
+
+# 11. ADMIN DASHBOARD
+
+Create a professional dashboard with:
+
+### Overview cards
+
+- Total active garments.
+- Waiting for processing.
+- In progress.
+- Ready for pickup.
+- On hold.
+- Orders awaiting pickup.
+
+### Department overview
+
+Show how many garments are currently in:
+
+- Spotting.
+- Ironing.
+- Packing.
+
+### Recent activities
+
+Display:
+- Newly registered garments.
+- Recently completed tasks.
+- Department handovers.
+- Issues reported.
+- Orders picked up.
+
+### Operational monitoring
+
+Show:
+- Delayed garments.
+- Garments on hold.
+- Orders with incomplete garments.
+- Garments ready for pickup.
+
+All dashboard data must come from actual database queries.
+
+When there is no data, show a useful empty state instead of fabricated statistics.
+
+---
+
+# 12. SEARCH AND TRACKING
+
+Create a global search feature.
+
+Search by:
+
+- Internal garment ID.
+- Order ID.
+- Physical tag number.
+- Customer/vendor.
+- Garment type.
+- Brand.
+- Color.
+
+Search results must display:
+
+- Garment photo thumbnail.
+- Garment name.
+- Order ID.
+- Physical tag number.
+- Customer/vendor.
+- Current status.
+- Current department.
+
+### Tracking detail page
+
+Show a visual timeline:
+
+1. Registered.
+2. Received by spotting.
+3. Spotting completed.
+4. Received by ironing.
+5. Ironing completed.
+6. Received by packing.
+7. Packing completed.
+8. Ready for pickup.
+9. Picked up.
+
+Show actual timestamps and staff names where available.
+
+Do not fabricate missing timeline events.
+
+---
+
+# 13. PICKUP AND ARCHIVE
+
+Pickup confirmation must be order-level.
+
+An order may contain multiple garments.
+
+Before confirming pickup:
+
+1. Verify all required garments.
+2. Ensure no garment is still in processing.
+3. Ensure no garment is on hold.
+4. Reconcile the garment quantity.
+5. Record pickup confirmation.
+6. Record who confirmed pickup.
+7. Record timestamp.
+8. Move the order to archived status.
+
+Do not allow partial pickup unless a separately designed partial-pickup workflow is implemented.
+
+### Archive rules
+
+IMPORTANT:
+
+Never permanently delete picked-up orders.
+
+Archive means:
+- Remove the order from active operational lists.
+- Preserve order records.
+- Preserve garment records.
+- Preserve photos.
+- Preserve workflow history.
+- Preserve pickup records.
+
+Provide:
+- Archive search.
+- Archive filters.
+- Order detail.
+- Garment detail.
+- Historical tracking.
+
+---
+
+# 14. DATABASE DESIGN
+
+Create normalized PostgreSQL tables with UUID primary keys.
+
+Required tables:
+
+1. users
+2. roles or role assignments
+3. orders
+4. garments
+5. workflow_templates
+6. workflow_template_stages
+7. garment_workflow_stages
+8. garment_photos
+9. workflow_history
+10. checklists
+11. checklist_items
+12. handover_records
+13. issue_reports
+14. pickup_records
+15. audit_logs
+
+Define:
+- Primary keys.
+- Foreign keys.
+- Unique constraints.
+- Check constraints.
+- Indexes.
+- Relationships.
+- Timestamps.
+- Appropriate nullable fields.
+
+Important database rules:
+
+- Use transactions for workflow updates.
+- Use pagination for large datasets.
+- Index commonly searched fields.
+- Prevent duplicate pickup confirmation.
+- Preserve historical data.
+- Prevent invalid status transitions.
+- Use optimistic locking or row locking where appropriate.
+- Use soft deletion for appropriate administrative records.
+- Do not physically delete audit and workflow history.
+
+Create SQL migration files.
+
+Do not rely on automatic database table creation at application startup.
+
+---
+
+# 15. RUST BACKEND IMPLEMENTATION
+
+Implement the complete Rust backend.
+
+Use Axum, Tokio, SQLx, Serde, Validator, Tracing, and Utoipa.
+
+Suggested module responsibilities:
+
+### main.rs
+Application startup and server initialization.
+
+### config/
+Environment and application configuration.
+
+### routes/
+API route definitions.
+
+### handlers/
+HTTP request and response handling.
+
+### services/
+Business logic and workflow rules.
+
+### repositories/
+Database queries and transactions.
+
+### models/
+Database and domain models.
+
+### middleware/
+Authentication, authorization, and request middleware.
+
+### errors/
+Centralized application errors.
+
+### utils/
+Shared utility functions.
+
+The backend must implement:
+
+- Authentication.
+- User management.
+- Order CRUD.
+- Garment CRUD.
+- Photo upload authorization.
+- Workflow engine.
+- Department queues.
+- Checklists.
+- Handover records.
+- Issue reporting.
+- Tracking history.
+- Pickup.
+- Archive.
+- Reports.
+- Search.
+- Pagination.
+
+Do not put business logic in route handlers.
+
+Handlers should call services.
+
+Services should coordinate repositories and enforce business rules.
+
+Repositories should contain database access logic.
+
+Use parameterized SQL queries.
+
+Do not build SQL queries using unsafe string concatenation.
+
+---
+
+# 16. REST API CONTRACT
+
+Base path:
+
+`/api/v1`
+
+### Authentication
+
+POST `/auth/login`
+
+POST `/auth/logout`
+
+GET `/auth/me`
+
+### Users
+
+GET `/users`
+
+POST `/users`
+
+GET `/users/{id}`
+
+PATCH `/users/{id}`
+
+### Orders
+
+POST `/orders`
+
+GET `/orders`
+
+GET `/orders/{id}`
+
+PATCH `/orders/{id}`
+
+POST `/orders/{id}/cancel`
+
+### Garments
+
+POST `/garments`
+
+GET `/garments`
+
+GET `/garments/{id}`
+
+PATCH `/garments/{id}`
+
+GET `/garments/{id}/history`
+
+### Photos
+
+POST `/garments/{id}/photos/upload-url`
+
+POST `/garments/{id}/photos`
+
+GET `/garments/{id}/photos`
+
+DELETE `/photos/{id}`
+
+### Workflow
+
+POST `/garments/{id}/start`
+
+POST `/garments/{id}/complete`
+
+POST `/garments/{id}/handover`
+
+POST `/garments/{id}/hold`
+
+POST `/garments/{id}/resume`
+
+### Checklists
+
+GET `/garments/{id}/checklist`
+
+POST `/garments/{id}/checklist`
+
+### Issues
+
+POST `/garments/{id}/issues`
+
+GET `/issues`
+
+### Pickup
+
+POST `/orders/{id}/pickup`
+
+### Archive
+
+GET `/archive`
+
+GET `/archive/{order_id}`
+
+### Reports
+
+GET `/reports/overview`
+
+GET `/reports/departments`
+
+GET `/reports/completed`
+
+### Search
+
+GET `/search?q=...`
+
+Every API must include:
+- Authentication requirements.
+- Authorization rules.
+- Input validation.
+- Consistent JSON response.
+- Appropriate HTTP status codes.
+- Error handling.
+- Pagination where relevant.
+
+Generate OpenAPI documentation.
+
+Do not allow generic PATCH endpoints to bypass workflow rules.
+
+Use idempotency protection for critical actions such as pickup and handover.
+
+---
+
+# 17. FRONTEND IMPLEMENTATION
+
+Build the complete Next.js application.
+
+Create reusable components.
+
+### Shared UI components
+
+- Sidebar.
+- Mobile bottom navigation.
+- Header.
+- User profile menu.
+- Notification indicator.
+- Stat cards.
+- Data tables.
+- Search bar.
+- Filters.
+- Status badges.
+- Garment cards.
+- Photo gallery.
+- Timeline.
+- Modal dialogs.
+- Confirmation dialogs.
+- Forms.
+- Empty states.
+- Loading skeletons.
+- Error states.
+- Toast notifications.
+
+### Required pages
+
+Authentication:
+- Login.
+
+Admin:
+- Dashboard.
+- Orders.
+- Create order.
+- Order details.
+- Garment database.
+- Register garment.
+- Garment details.
+- Photo gallery.
+- Tracking.
+- Department monitoring.
+- Pickup management.
+- Archive.
+- Reports.
+- User management.
+- Settings.
+
+Staff:
+- Staff dashboard.
+- Department queue.
+- Garment details.
+- Work checklist.
+- Work history.
+- Issue reporting.
+- Profile.
+
+### Frontend engineering rules
+
+- Use TypeScript strictly.
+- Define API response types.
+- Use Zod for form validation.
+- Use TanStack Query for server state.
+- Handle loading and error states.
+- Avoid unnecessary API requests.
+- Use optimistic UI only when safe.
+- Invalidate or refresh relevant queries after mutations.
+- Keep components reusable.
+- Keep frontend business logic minimal.
+- Never store secret credentials in browser code.
+- Never use fabricated production data.
+
+All buttons must have real actions.
+
+All forms must submit to actual APIs.
+
+All tables must load actual backend data.
+
+---
+
+# 18. PERFORMANCE AND DATA EFFICIENCY
+
+The system must remain efficient even when data grows.
+
+Implement:
+
+- Server-side pagination.
+- Database indexes.
+- Efficient SQL queries.
+- Connection pooling.
+- Lazy image loading.
+- Thumbnail generation.
+- Image compression.
+- Search filtering.
+- Appropriate API response sizes.
+- Request validation.
+- Rate limiting.
+- Structured logging.
+
+Do not load every order and garment into memory.
+
+Do not load all photos simultaneously.
+
+Do not use PostgreSQL as image binary storage.
+
+Do not introduce Redis until a measured performance requirement justifies it.
+
+Do not delete old data simply to reduce database size.
+
+---
+
+# 19. SECURITY AND DATA INTEGRITY
+
+Implement:
+
+- Secure password hashing.
+- Session security.
+- Backend authorization.
+- Input validation.
+- SQL injection protection.
+- Upload validation.
+- Private photo access.
+- Audit logging.
+- Rate limiting.
+- Error sanitization.
+- Environment variable management.
+- Database backup strategy.
+
+Never expose:
+- Database passwords.
+- Supabase service role keys.
+- Secret tokens.
+- Private environment variables.
+
+Frontend must never receive privileged storage credentials.
+
+---
+
+# 20. TESTING
+
+Create real tests.
+
+### Backend tests
+
+Test:
+- Login.
+- Authentication.
+- Role permissions.
+- Order creation.
+- Garment creation.
+- Photo metadata registration.
+- Workflow transitions.
+- Invalid transitions.
+- Department authorization.
+- Handover.
+- Issue reporting.
+- Pickup.
+- Archive.
+- Duplicate submissions.
+- Concurrent updates.
+
+### Frontend tests
+
+Test:
+- Login flow.
+- Protected pages.
+- Order registration.
+- Garment registration.
+- Photo upload.
+- Search.
+- Staff workflow.
+- Pickup confirmation.
+- Responsive layout.
+
+### Integration tests
+
+Verify that frontend and backend work together with the actual database.
+
+Do not claim tests passed unless they were actually executed.
+
+---
+
+# 21. DEPLOYMENT
+
+Prepare production deployment documentation.
+
+Include:
+
+- Frontend deployment.
+- Rust backend deployment.
+- PostgreSQL configuration.
+- Supabase Storage configuration.
+- Environment variables.
+- Database migrations.
+- CORS configuration.
+- HTTPS.
+- Logging.
+- Backups.
+- Health checks.
+
+Provide `.env.example` files.
+
+Never commit real `.env` files or secrets.
+
+Include Dockerfiles and Docker Compose for local development where appropriate.
+
+---
+
+# 22. DEVELOPMENT EXECUTION STRATEGY
+
+Build the application incrementally, but complete the entire product.
+
+Follow this sequence:
+
+PHASE 1 — Project foundation
+- Inspect the existing workspace.
+- Initialize frontend.
+- Initialize Rust backend.
+- Configure database.
+- Establish API connection.
+- Create design system.
+
+PHASE 2 — Database and authentication
+- Create migrations.
+- Implement users.
+- Implement roles.
+- Implement login/logout.
+- Implement protected routes.
+- Test authentication.
+
+PHASE 3 — Order and garment management
+- Create order CRUD.
+- Create garment CRUD.
+- Implement garment registration.
+- Implement photo storage.
+- Implement photo gallery.
+
+PHASE 4 — Workflow engine
+- Implement state machine.
+- Implement department queues.
+- Implement start and completion actions.
+- Implement checklists.
+- Implement handovers.
+- Implement issue reporting.
+- Implement tracking history.
+
+PHASE 5 — Admin application
+- Build dashboard.
+- Build order management.
+- Build garment database.
+- Build tracking.
+- Build pickup.
+- Build archive.
+- Build reports.
+
+PHASE 6 — Staff application
+- Build spotting interface.
+- Build ironing interface.
+- Build packing interface.
+- Build staff work queues.
+- Build mobile workflow.
+
+PHASE 7 — Integration
+- Connect every page to actual APIs.
+- Verify database consistency.
+- Test all roles.
+- Test all transitions.
+- Test photo storage.
+- Fix all errors.
+
+PHASE 8 — Production preparation
+- Security review.
+- Performance review.
+- Responsive review.
+- Deployment configuration.
+- Documentation.
+
+---
+
+# 23. STRICT RULES
+
+1. Do not stop after creating the UI.
+2. Do not generate a static prototype.
+3. Do not use fake login.
+4. Do not use fake operational records.
+5. Do not create nonfunctional buttons.
+6. Do not use mock APIs as the final implementation.
+7. Do not skip PostgreSQL integration.
+8. Do not skip Rust backend implementation.
+9. Do not skip authentication.
+10. Do not skip role-based authorization.
+11. Do not bypass workflow validation.
+12. Do not delete picked-up orders.
+13. Do not change the current physical tag process.
+14. Do not expose secrets.
+15. Do not put the whole backend in one file.
+16. Do not silently ignore build errors.
+17. Do not claim successful implementation without testing.
+
+If an external service requires credentials, create the integration and clearly document the required environment variables. Do not invent credentials.
+
+If a feature cannot be completed because an external dependency is unavailable, explain the limitation and implement the appropriate integration boundary without pretending it is functional.
+
+---
+
+# 24. FINAL ACCEPTANCE CRITERIA
+
+The application is only considered complete when:
+
+- Admin can log in.
+- Staff can log in with assigned roles.
+- Admin can register orders.
+- Admin can register individual garments.
+- Admin can upload actual garment photos.
+- Staff can view their department queues.
+- Staff can start and complete tasks.
+- Staff can fill checklists.
+- Staff can report problems.
+- Garments move through valid workflow transitions.
+- All transitions are recorded.
+- Admin can track individual garments.
+- Admin can search by physical tag number and garment details.
+- Admin can see which department handles each garment.
+- Admin can confirm order pickup.
+- Picked-up orders are archived, not deleted.
+- Archived records retain photos and tracking history.
+- Database constraints prevent invalid data.
+- Application works on desktop and mobile.
+- Frontend and Rust backend are connected.
+- Automated tests are executed successfully.
+
+# 25. FIRST ACTION
+
+Start by inspecting the current project workspace and existing files.
+
+Do not overwrite existing working code without inspection.
+
+Then implement the complete application in the phases above.
+
+Do not merely provide a plan or code snippets in the chat. Create and modify the actual project files in the available workspace.
+
+After each phase:
+1. Explain what was implemented.
+2. List files created or modified.
+3. Run the relevant tests/build commands.
+4. Report errors honestly.
+5. Continue to the next phase.
+
+Your goal is a working ALMOS Laundry Detailing tracking application, not just a design concept.

@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+    color: #12345a;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.almos-gradient-primary {
+  background: linear-gradient(135deg, #0756b8 0%, #3d8be8 55%, #eaf3ff 100%);
+}
+
+.almos-gradient-accent {
+  background: linear-gradient(135deg, #0756b8 0%, #f7941d 100%);
+}
+
+.almos-gradient-hero {
+  background: linear-gradient(135deg, #0756b8 0%, #1c6fd4 62%, #3d8be8 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
