@@ -1,22 +1,21 @@
 import 'dotenv/config';
-import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createServer as createViteServer } from 'vite';
-import { createBackendApp } from './src/server/app.ts';
+import { closePool } from './src/db/index.ts';
+import { attachProductionSpa, createBackendApp } from './src/server/app.ts';
 
 async function startServer() {
   const app = createBackendApp();
   const port = Number(process.env.PORT || 3000);
   const distDir = path.resolve(process.cwd(), 'dist');
-  const isProd = process.env.NODE_ENV === 'production' && fs.existsSync(distDir);
 
-  if (isProd) {
-    app.use(express.static(distDir));
-    app.get('/{*splat}', (_req, res) => {
-      res.sendFile(path.join(distDir, 'index.html'));
-    });
+  if (process.env.NODE_ENV === 'production') {
+    if (!fs.existsSync(distDir)) {
+      throw new Error(`Production frontend build directory not found: ${distDir}`);
+    }
+    attachProductionSpa(app, distDir);
   } else {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -24,9 +23,23 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  app.listen(port, '0.0.0.0', () => {
+  const server = app.listen(port, '0.0.0.0', () => {
     console.log(`ALMOS Laundry Tracking Server listening on http://0.0.0.0:${port}`);
   });
+
+  const shutdown = (signal: string) => {
+    console.log(`Received ${signal}, shutting down HTTP server gracefully...`);
+    server.close(async () => {
+      await closePool().catch((err) => console.error('Error closing SQL pool:', err));
+      process.exit(0);
+    });
+    setTimeout(() => {
+      process.exit(1);
+    }, 10000).unref();
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 startServer().catch((err) => {

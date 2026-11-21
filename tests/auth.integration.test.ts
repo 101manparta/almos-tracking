@@ -166,11 +166,18 @@ describe.skipIf(!hasSqlEnv)('Controlled Login, RBAC, Session & Regression Integr
     expect(okAdmin.status).toBe(200);
     expect(okAdmin.body.data.user.role).toBe('ADMIN');
     expect(okAdmin.headers.get('set-cookie')).toContain('HttpOnly');
+    expect(JSON.stringify(okAdmin.body)).not.toContain('passwordHash');
+    expect(JSON.stringify(okAdmin.body)).not.toContain('$scrypt$');
 
     const adminToken = okAdmin.body.data.sessionToken as string;
     sharedAdminToken = adminToken;
     const overviewRes = await apiCall('/api/v1/reports/overview', {}, adminToken);
     expect(overviewRes.status).toBe(200);
+
+    const usersListRes = await apiCall('/api/v1/users', {}, adminToken);
+    expect(usersListRes.status).toBe(200);
+    expect(JSON.stringify(usersListRes.body)).not.toContain('passwordHash');
+    expect(JSON.stringify(usersListRes.body)).not.toContain('$scrypt$');
 
     const rejectedEmp = await apiCall('/api/v1/auth/login', {
       method: 'POST',
@@ -288,6 +295,8 @@ describe.skipIf(!hasSqlEnv)('Controlled Login, RBAC, Session & Regression Integr
     const meRes = await apiCall('/api/v1/auth/me', {}, token);
     expect(meRes.status).toBe(200);
     expect(meRes.body.data.role).toBe('IRONING');
+    expect(JSON.stringify(meRes.body)).not.toContain('passwordHash');
+    expect(JSON.stringify(meRes.body)).not.toContain('$scrypt$');
 
     // Logout revokes session
     const logoutRes = await apiCall('/api/v1/auth/logout', { method: 'POST' }, token);

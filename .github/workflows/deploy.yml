@@ -1,0 +1,122 @@
+name: CI/CD Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: analog-platform-3bcxw
+  GCP_REGION: asia-southeast1
+  GAR_REPOSITORY: almos-laundry
+  IMAGE_NAME: almos-web
+  CLOUD_RUN_SERVICE: almos-laundry-tracking
+  CLOUD_SQL_CONNECTION_NAME: analog-platform-3bcxw:asia-southeast1:ai-studio-bd7c4503
+  SQL_DB_NAME: cloud_sql_development_database
+  SQL_USER: ai_studio_admin
+  SUPABASE_STORAGE_BUCKET: almos-garment-photos
+
+jobs:
+  ci:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run TypeScript lint check
+        run: npm run lint
+
+      - name: Run automated tests
+        run: npm test
+
+      - name: Build frontend and backend
+        run: npm run build
+
+  deploy:
+    name: Build Image & Deploy to Cloud Run
+    needs: ci
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: production
+      url: ${{ steps.deploy_run.outputs.service_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required WIF & Runtime SA secrets
+        run: |
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ] || [ -z "${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}" ] || [ -z "${{ secrets.CLOUD_RUN_RUNTIME_SA }}" ]; then
+            echo "::error::Missing required GitHub Secrets: GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_DEPLOYER_SERVICE_ACCOUNT, and/or CLOUD_RUN_RUNTIME_SA."
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud via Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth for Artifact Registry
+        run: gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
+
+      - name: Build and push Docker image to Artifact Registry
+        env:
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}
+        run: |
+          docker build -t "${IMAGE_URI}:${{ github.sha }}" .
+          docker push "${IMAGE_URI}:${{ github.sha }}"
+
+      - name: Deploy to Google Cloud Run
+        id: deploy_run
+        env:
+          IMAGE_URI: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}
+        run: |
+          gcloud run deploy "${{ env.CLOUD_RUN_SERVICE }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --platform=managed \
+            --image="${IMAGE_URI}:${{ github.sha }}" \
+            --service-account="${{ secrets.CLOUD_RUN_RUNTIME_SA }}" \
+            --add-cloudsql-instances="${{ env.CLOUD_SQL_CONNECTION_NAME }}" \
+            --allow-unauthenticated \
+            --port=8080 \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=3 \
+            --set-env-vars="NODE_ENV=production,SQL_HOST=/cloudsql/${{ env.CLOUD_SQL_CONNECTION_NAME }},SQL_DB_NAME=${{ env.SQL_DB_NAME }},SQL_USER=${{ env.SQL_USER }},SQL_POOL_MAX=5,SUPABASE_STORAGE_BUCKET=${{ env.SUPABASE_STORAGE_BUCKET }},APP_URL=${{ vars.APP_URL }}" \
+            --set-secrets="SQL_PASSWORD=almos-sql-password:latest,SUPABASE_URL=almos-supabase-url:latest,SUPABASE_SERVICE_ROLE_KEY=almos-supabase-service-role-key:latest"
+
+          SERVICE_URL="$(gcloud run services describe "${{ env.CLOUD_RUN_SERVICE }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format="value(status.url)")"
+          echo "service_url=${SERVICE_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Cloud Run /api/v1/health endpoint
+        run: |
+          SERVICE_URL="${{ steps.deploy_run.outputs.service_url }}"
+          echo "Deployed URL: ${SERVICE_URL}"
+          curl -fsS "${SERVICE_URL}/api/v1/health"

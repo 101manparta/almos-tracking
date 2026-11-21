@@ -58,6 +58,22 @@ export function errorMiddleware(
     });
   }
 
+  // Handle malformed JSON request bodies cleanly
+  if (
+    err instanceof SyntaxError &&
+    typeof err === 'object' &&
+    err !== null &&
+    'type' in err &&
+    (err as { type?: string }).type === 'entity.parse.failed'
+  ) {
+    return res.status(400).json({
+      error: {
+        code: 'INVALID_JSON',
+        message: 'Format JSON pada permintaan tidak valid.',
+      },
+    });
+  }
+
   console.error('Unhandled server error:', err);
   return res.status(500).json({
     error: {

@@ -51,6 +51,13 @@ export async function uploadGarmentPhotoBuffers(params: {
   const thumbnailPath = `${params.garmentId}/${fileUuid}_thumb.${thumbExt}`;
 
   const supa = getSupabaseConfig();
+  if (!supa && process.env.NODE_ENV === 'production') {
+    throw new AppError(
+      500,
+      'STORAGE_CONFIG_MISSING',
+      'Konfigurasi Supabase Storage wajib tersedia pada lingkungan produksi.'
+    );
+  }
   if (supa) {
     const uploadToSupabase = async (objectPath: string, body: Buffer, contentType: string) => {
       const endpoint = `${supa.url}/storage/v1/object/${encodeURIComponent(supa.bucket)}/${objectPath}`;
@@ -90,7 +97,7 @@ export async function uploadGarmentPhotoBuffers(params: {
     };
   }
 
-  // Private local disk storage (only served via authenticated API route)
+  // Private local disk storage (development/test only; served via authenticated API route)
   const absOriginal = resolveConfinedPath(storagePath);
   const absThumb = resolveConfinedPath(thumbnailPath);
   await fs.mkdir(path.dirname(absOriginal), { recursive: true });

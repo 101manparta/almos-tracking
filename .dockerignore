@@ -1,0 +1,31 @@
+# Dependencies & build artifacts
+node_modules
+bun.lock
+dist
+dist-server
+coverage
+build
+*.tsbuildinfo
+
+# Environment & secrets (never bake into image)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+
+# Local runtime storage & logs
+storage
+*.log
+npm-debug.log*
+
+# VCS, CI & documentation
+.git
+.gitignore
+.github
+docs
+README.md
+tests
+.DS_Store
+Thumbs.db
