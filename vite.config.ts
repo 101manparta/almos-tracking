@@ -15,7 +15,7 @@ export default defineConfig(() => {
       {
         name: 'copy-unbundled-src-assets',
         apply: 'build',
-        closeBundle(error?: Error): void {
+        async closeBundle(error?: Error): Promise<void> {
           if (error) {
             return;
           }
@@ -24,6 +24,17 @@ export default defineConfig(() => {
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
             fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+          }
+          if (process.env.VERCEL === '1') {
+            const esbuild = await import('esbuild');
+            await esbuild.build({
+              entryPoints: [path.resolve(__dirname, 'src/server/vercel.ts')],
+              bundle: true,
+              platform: 'node',
+              format: 'esm',
+              packages: 'external',
+              outfile: path.resolve(__dirname, 'dist-server/vercel.mjs'),
+            });
           }
         },
       },

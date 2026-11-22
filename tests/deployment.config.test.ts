@@ -210,6 +210,14 @@ describe('Cloud SQL Connection Config & Production Server Startup', () => {
       expect(notFoundRes.status).toBe(404);
       const notFoundJson = (await notFoundRes.json()) as { error: { code: string } };
       expect(notFoundJson.error.code).toBe('ENDPOINT_NOT_FOUND');
+
+      const rewrittenHealthRes = await fetch(`${baseUrl}/api/index?__path=/v1/health`);
+      expect(rewrittenHealthRes.status).toBe(200);
+      const rewrittenHealthJson = (await rewrittenHealthRes.json()) as { data: { status: string } };
+      expect(rewrittenHealthJson.data.status).toBe('ok');
+
+      const rewrittenSearchRes = await fetch(`${baseUrl}/api/index?__path=/v1/openapi.json&v=1`);
+      expect(rewrittenSearchRes.status).toBe(200);
     });
   });
 });

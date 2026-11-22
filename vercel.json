@@ -3,7 +3,20 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install --include=dev",
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "dist-server/**"
+    }
+  },
   "rewrites": [
+    {
+      "source": "/api",
+      "destination": "/api/index?__path=/"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index?__path=/$1"
+    },
     {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
