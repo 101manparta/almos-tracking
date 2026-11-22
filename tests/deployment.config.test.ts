@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import type { Server } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { buildPoolConfig } from '../src/db/index.ts';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { buildPoolConfig, handlePoolError } from '../src/db/index.ts';
 import { attachProductionSpa, createBackendApp } from '../src/server/app.ts';
 import { AppError } from '../src/server/errors/app-error.ts';
 
@@ -27,6 +27,22 @@ describe('Cloud SQL Connection Config & Production Server Startup', () => {
     expect(cfg.max).toBe(5);
     expect(cfg.connectionTimeoutMillis).toBe(15000);
     expect(cfg.idleTimeoutMillis).toBe(30000);
+    expect(cfg.keepAlive).toBe(true);
+    expect(cfg.keepAliveInitialDelayMillis).toBe(10000);
+    expect(cfg.allowExitOnIdle).toBe(true);
+  });
+
+  it('handles transient idle SQL pool terminations gracefully without console.error stack noise', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      handlePoolError(new Error('Connection terminated unexpectedly'));
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      errorSpy.mockRestore();
+      warnSpy.mockRestore();
+    }
   });
 
   it('builds Unix socket config for AI Studio Preview (/app/cloudsql/...)', () => {
@@ -58,6 +74,21 @@ describe('Cloud SQL Connection Config & Production Server Startup', () => {
     expect(cfg.port).toBe(5432);
     expect(cfg.ssl).toEqual({ rejectUnauthorized: true });
     expect(cfg.max).toBe(8);
+  });
+
+  it('builds Supabase PostgreSQL config from DATABASE_URL with SSL enabled for remote hosts', () => {
+    const cfg = buildPoolConfig({
+      DATABASE_URL:
+        'DIRECT_URL="postgresql://postgres.demo:secret@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require"',
+      SQL_POOL_MAX: '5',
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.connectionString).toBe(
+      'postgresql://postgres.demo:secret@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?sslmode=require'
+    );
+    expect(cfg.ssl).toEqual({ rejectUnauthorized: false });
+    expect(cfg.max).toBe(5);
+    expect(cfg.keepAlive).toBe(true);
   });
 
   describe('Production SPA static + API routing without Vite dev middleware', () => {
