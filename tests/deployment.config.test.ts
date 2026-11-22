@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import type { Server } from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
@@ -6,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildPoolConfig, handlePoolError } from '../src/db/index.ts';
 import { attachProductionSpa, createBackendApp } from '../src/server/app.ts';
 import { AppError } from '../src/server/errors/app-error.ts';
+import vercelHandler from '../src/server/vercel.ts';
 
 describe('Cloud SQL Connection Config & Production Server Startup', () => {
   it('builds Unix socket config for Google Cloud Run (/cloudsql/...) without TCP port or SSL', () => {
@@ -91,6 +93,19 @@ describe('Cloud SQL Connection Config & Production Server Startup', () => {
     expect(cfg.keepAlive).toBe(true);
   });
 
+  it('uses conservative pool limits on Vercel serverless when SQL_POOL_MAX is unset', () => {
+    const cfg = buildPoolConfig({
+      VERCEL: '1',
+      DATABASE_URL:
+        'postgresql://postgres.demo:secret@aws-0-ap-southeast-2.pooler.supabase.com:5432/postgres',
+    } as NodeJS.ProcessEnv);
+
+    expect(cfg.max).toBe(3);
+    expect(cfg.idleTimeoutMillis).toBe(10000);
+    expect(cfg.allowExitOnIdle).toBe(true);
+    expect(cfg.ssl).toEqual({ rejectUnauthorized: false });
+  });
+
   describe('Production SPA static + API routing without Vite dev middleware', () => {
     let server: Server;
     let baseUrl = '';
@@ -152,6 +167,49 @@ describe('Cloud SQL Connection Config & Production Server Startup', () => {
       // Ensure AppError stays intact
       const err = new AppError(404, 'TEST', 'test');
       expect(err.statusCode).toBe(404);
+    });
+  });
+
+  describe('Vercel Serverless API handler', () => {
+    let server: Server;
+    let baseUrl = '';
+
+    beforeAll(async () => {
+      server = http.createServer((req, res) => {
+        vercelHandler(req as never, res as never);
+      });
+      await new Promise<void>((resolve) => {
+        server.listen(0, '127.0.0.1', () => {
+          const addr = server.address();
+          if (addr && typeof addr === 'object') {
+            baseUrl = `http://127.0.0.1:${addr.port}`;
+          }
+          resolve();
+        });
+      });
+    });
+
+    afterAll(async () => {
+      await new Promise<void>((resolve, reject) => {
+        server.close((err) => (err ? reject(err) : resolve()));
+      });
+    });
+
+    it('handles /api/v1/health, /api/v1/openapi.json, and unknown API 404 via default export', async () => {
+      const healthRes = await fetch(`${baseUrl}/api/v1/health`);
+      expect(healthRes.status).toBe(200);
+      const healthJson = (await healthRes.json()) as { data: { status: string } };
+      expect(healthJson.data.status).toBe('ok');
+
+      const openapiRes = await fetch(`${baseUrl}/api/v1/openapi.json`);
+      expect(openapiRes.status).toBe(200);
+      const openapiJson = (await openapiRes.json()) as { openapi: string };
+      expect(openapiJson.openapi).toBe('3.0.3');
+
+      const notFoundRes = await fetch(`${baseUrl}/api/v1/nonexistent`);
+      expect(notFoundRes.status).toBe(404);
+      const notFoundJson = (await notFoundRes.json()) as { error: { code: string } };
+      expect(notFoundJson.error.code).toBe('ENDPOINT_NOT_FOUND');
     });
   });
 });

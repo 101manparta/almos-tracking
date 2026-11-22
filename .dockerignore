@@ -29,3 +29,5 @@ README.md
 tests
 .DS_Store
 Thumbs.db
+api
+vercel.json

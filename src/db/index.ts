@@ -29,8 +29,11 @@ export function normalizeDatabaseUrl(raw?: string): string | undefined {
 
 export function buildPoolConfig(env: NodeJS.ProcessEnv = process.env): PoolConfig {
   const databaseUrl = normalizeDatabaseUrl(env.DATABASE_URL);
-  const parsedPoolMax = env.SQL_POOL_MAX ? Number(env.SQL_POOL_MAX) : 10;
-  const max = Number.isFinite(parsedPoolMax) && parsedPoolMax > 0 ? parsedPoolMax : 10;
+  const isServerless = env.VERCEL === '1';
+  const defaultMax = isServerless ? 3 : 10;
+  const idleTimeoutMillis = isServerless ? 10000 : 30000;
+  const parsedPoolMax = env.SQL_POOL_MAX ? Number(env.SQL_POOL_MAX) : defaultMax;
+  const max = Number.isFinite(parsedPoolMax) && parsedPoolMax > 0 ? parsedPoolMax : defaultMax;
 
   if (databaseUrl) {
     const isLocalUrl =
@@ -47,7 +50,7 @@ export function buildPoolConfig(env: NodeJS.ProcessEnv = process.env): PoolConfi
       ...(ssl ? { ssl } : {}),
       max,
       connectionTimeoutMillis: 15000,
-      idleTimeoutMillis: 30000,
+      idleTimeoutMillis,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
       allowExitOnIdle: true,
@@ -67,7 +70,7 @@ export function buildPoolConfig(env: NodeJS.ProcessEnv = process.env): PoolConfi
     database: env.SQL_DB_NAME,
     max,
     connectionTimeoutMillis: 15000,
-    idleTimeoutMillis: 30000,
+    idleTimeoutMillis,
     keepAlive: true,
     keepAliveInitialDelayMillis: 10000,
     allowExitOnIdle: true,

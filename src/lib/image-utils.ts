@@ -36,13 +36,19 @@ export async function prepareCompressedImageAndThumb(file: File): Promise<{
       thumbCtx.drawImage(img, 0, 0, thumbW, thumbH);
     }
 
-    const originalBlob = await new Promise<Blob>((resolve) => {
+    let originalBlob = await new Promise<Blob>((resolve) => {
       origCanvas.toBlob(
         (b) => resolve(b || file),
         file.type === 'image/png' ? 'image/png' : 'image/jpeg',
         0.86
       );
     });
+
+    if (originalBlob.size > 3 * 1024 * 1024) {
+      originalBlob = await new Promise<Blob>((resolve) => {
+        origCanvas.toBlob((b) => resolve(b || originalBlob), 'image/jpeg', 0.84);
+      });
+    }
 
     const thumbnailBlob = await new Promise<Blob>((resolve) => {
       (thumbCtx ? thumbCanvas : origCanvas).toBlob(
