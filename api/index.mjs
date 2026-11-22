@@ -1,3 +1,3 @@
-import handler from '../dist-server/vercel.mjs';
+import handler from './_vercel-app.mjs';
 
 export default handler;

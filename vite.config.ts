@@ -33,7 +33,7 @@ export default defineConfig(() => {
               platform: 'node',
               format: 'esm',
               packages: 'external',
-              outfile: path.resolve(__dirname, 'dist-server/vercel.mjs'),
+              outfile: path.resolve(__dirname, 'api/_vercel-app.mjs'),
             });
           }
         },

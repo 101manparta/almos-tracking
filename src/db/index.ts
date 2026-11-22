@@ -105,7 +105,17 @@ export function handlePoolError(err: unknown) {
 
 export const createPool = () => {
   if (!global._postgresPool) {
-    global._postgresPool = new Pool(buildPoolConfig(process.env));
+    let config: PoolConfig;
+    try {
+      config = buildPoolConfig(process.env);
+    } catch (err) {
+      console.error(
+        '[DB Pool] Invalid database configuration:',
+        err instanceof Error ? err.message : err
+      );
+      config = { max: 1, allowExitOnIdle: true };
+    }
+    global._postgresPool = new Pool(config);
 
     global._postgresPool.on('error', handlePoolError);
   }
